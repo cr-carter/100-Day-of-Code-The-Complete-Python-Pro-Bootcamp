@@ -1,0 +1,127 @@
+import random
+import os
+
+#This will deal a card from the cards remaining in a deck, and return the card and hand to a player.
+def deal_card(deck, player):
+    """Deals a card from remaining card in a deck, assigning them to the indicated hand. Returns the deck and the player's hand."""
+    i = random.randint(0, len(deck) - 1)
+    card = deck[i]
+    del deck[i]
+    player.append(card)
+    return(deck, player)
+
+#This will calculate the value of a hand and return the value. If the value is over 21
+#and the hand contains an Ace, change the value of the Ace to 1 (default is 11).
+def hand_value(hand):
+    """Returns value of hand"""
+    value = 0
+    for card in hand:
+        try:
+            value += int(card)
+        except:
+            if card == "A":
+                value += 11
+            else:
+                value += 10
+    if value > 21 and "A" in hand:
+        value -= 10
+    return value
+
+#This will show the user their cards and total value, as well as the first card of the dealer.
+def show_table(player, dealer):
+    """Shows cards of player and dealer(only the first card of dealer) and the players score."""
+    player_show = ""
+    dealer_show = ""
+    for i in player:
+        player_show += i + " "
+    player_score = hand_value(player)
+    print(f"Your cards: {player_show}\nCurrent score: {player_score}")
+    dealer_show = ""
+    for i in range(len(dealer)):
+        if i == 0:
+            dealer_show += str(dealer[i])+ " "
+        else:
+            dealer_show += "[] "
+    print(f"Dealer cards: {dealer_show}")
+    return player_score
+
+#This will show all cards of player and dealer, as well as total value of both hands, and inform user who won.
+def end_game(player, dealer):
+    """Shows cards of player and dealer, the scores of each hands, and who won."""
+    player_show = ""
+    dealer_show = ""
+    for i in player:
+        player_show += i + " "
+    player_score = hand_value(player)
+    print(f"Your cards: {player_show}\nPlayer score: {player_score}")
+    for i in dealer:
+        dealer_show += i + " "
+    dealer_score = hand_value(dealer)
+    print(f"Dealer cards: {dealer_show}\nDealer score: {dealer_score}")
+    if player_score > 21 or dealer_score > player_score and dealer_score < 22:
+        print("Dealer wins.")
+    elif player_score == dealer_score and dealer_score < 22:
+        print("Tie.")
+    else:
+        print("Player wins.")
+
+#The blackjack game, using all previous defined functions.
+def blackjack():
+    #This will clear the screen using the appropriate command based on the operating system
+    os.system("cls" if os.name == "nt" else "clear")
+    print("""
+    .------.            _     _            _    _            _    
+    |A_  _ |.          | |   | |          | |  (_)          | |   
+    |( \/ ).-----.     | |__ | | __ _  ___| | ___  __ _  ___| | __
+    | \  /|K /\  |     | '_ \| |/ _` |/ __| |/ / |/ _` |/ __| |/ /
+    |  \/ | /  \ |     | |_) | | (_| | (__|   <| | (_| | (__|   < 
+    `-----| \  / |     |_.__/|_|\__,_|\___|_|\_\ |\__,_|\___|_|\_\\
+          |  \/ K|                            _/ |                
+          `------'                           |__/           
+    """)
+    print("The dealer deals the cards.")
+
+    #Create initial variables. A deck, sort it randomly, and empty lists for player and dealer hand.
+    game_deck = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A",
+            "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A",
+            "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A",
+            "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A",
+            ]
+    random.shuffle(game_deck)
+    player_hand = []
+    dealer_hand = []
+
+    #Start game by dealing 2 cards each to player and dealer
+    game_deck, player_hand = deal_card(game_deck, player_hand)
+    game_deck, dealer_hand = deal_card(game_deck, dealer_hand)
+    game_deck, player_hand = deal_card(game_deck, player_hand)
+    game_deck, dealer_hand = deal_card(game_deck, dealer_hand)
+    show_table(player_hand, dealer_hand)
+
+    #While loop for player to get cards
+    another_card = ""
+    while another_card == "" or another_card == "y" and hand_value(player_hand) < 21:
+        another_card = ""
+        while another_card != "y" and another_card != "n":
+            another_card = input("Would you like another card? (y/n)").lower()
+
+        if another_card == "y":
+            game_deck, player_hand = deal_card(game_deck, player_hand)
+            show_table(player_hand, dealer_hand)
+            if hand_value(player_hand) > 21:
+                print("You went over 21, you lose.")
+                another_card = "n"
+
+    if hand_value(player_hand) != 21 and hand_value(dealer_hand) != 21 and hand_value(player_hand) < 22:
+            while hand_value(dealer_hand) < 16:
+                deal_card(game_deck, dealer_hand)
+
+    end_game(player_hand, dealer_hand)
+    
+    play_again = ""
+    while play_again != "y" and play_again != "n":
+        play_again = input("Would you like to play again? Deck will be reshuffled. (y/n)").lower()
+    if play_again == "y":
+        blackjack()
+
+blackjack()
