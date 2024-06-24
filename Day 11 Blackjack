@@ -1,3 +1,6 @@
+#The purpose of this project is to further practice with creating functions, calling functions from within other functions,
+#recursive functions, manipulating lists, and structuring logic within a program.
+
 import random
 import os
 
