@@ -35,9 +35,9 @@ def make_guess():
 def check_guess(guess):
     global secret_number
     global correct_guess
-    if user_guess > secret_number:
+    if guess > secret_number:
         print("Too high.")
-    elif user_guess < secret_number:
+    elif guess < secret_number:
         print ("Too low.")
     else:
         print ("You guessed the secret number!")
