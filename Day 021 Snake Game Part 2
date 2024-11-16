@@ -1,0 +1,162 @@
+#The purpose of this project is to gain experience with inheritance, slicing lists and tuples.
+
+
+#########
+##main.py
+from turtle import Screen
+import time
+from snake import Snake
+from food import Food
+from scoreboard import Scoreboard
+
+
+screen = Screen()
+screen.setup(width=600, height=600)
+screen.listen()
+screen.bgcolor("black")
+screen.title("Snake Game")
+screen.tracer(0)
+scoreboard = Scoreboard()
+
+snake = Snake()
+
+screen.onkey(key="Up", fun=snake.direction_up)
+screen.onkey(key="Left", fun=snake.direction_left)
+screen.onkey(key="Down", fun=snake.direction_down)
+screen.onkey(key="Right", fun=snake.direction_right)
+
+game_on = True
+food = Food()
+
+
+while game_on:
+    screen.update()
+    time.sleep(.15)
+    snake.move()
+
+#   #Detect if snake collides with food.
+    if snake.head.distance(food) < 5:
+        food.refresh()
+        scoreboard.increase_score()
+        snake.extend()
+
+#   #Detect collision with wall
+    if snake.head.xcor() > 281 or snake.head.xcor() < -281 or snake.head.ycor() > 281 or snake.head.ycor() < -281:
+        game_on = False
+        scoreboard.game_over()
+
+#    #Detect collision with tail
+    for segment in snake.segments[1:]:
+        if snake.head.distance(segment) < 10:
+            game_on = False
+            scoreboard.game_over()
+
+screen.exitonclick()
+
+##########
+##snake.py
+from turtle import Turtle
+
+UP = 90
+DOWN = 270
+LEFT = 180
+RIGHT = 0
+STARTING_POSITIONS = [(20, 0), (0, 0), (-20, 0)]
+
+
+class Snake:
+    def __init__(self):
+        self.segments = []
+        self.create_snake()
+        self.head = self.segments[0]
+        self.second_segment = self.segments[1]
+
+    def create_snake(self):
+        for position in STARTING_POSITIONS:
+            self.add_segment(position)
+
+    def add_segment(self, position):
+        new_segment = Turtle("square")
+        new_segment.color("white")
+        new_segment.penup()
+        new_segment.teleport(position[0], position[1])
+        self.segments.append(new_segment)
+
+    def extend(self):
+        self.add_segment(self.segments[-1].position())
+
+    def move(self):
+        for i in range(0, len(self.segments))[::-1]:
+            if i > 0:
+                x_cor = self.segments[i - 1].xcor()
+                y_cor = self.segments[i - 1].ycor()
+                self.segments[i].teleport(x_cor, y_cor)
+            else:
+                self.segments[0].forward(20)
+    
+    def direction_up(self):
+        if int(self.head.xcor()) != int(self.second_segment.xcor()):
+            self.head.setheading(UP)
+
+    def direction_right(self):
+        if int(self.head.ycor()) != int(self.second_segment.ycor()):
+            self.head.setheading(RIGHT)
+
+    def direction_down(self):
+        if int(self.head.xcor()) != int(self.second_segment.xcor()):
+            self.head.setheading(DOWN)
+
+    def direction_left(self):
+        if int(self.head.ycor()) != int(self.second_segment.ycor()):
+            self.head.setheading(LEFT)
+
+#########
+##food.py
+from turtle import Turtle
+import random
+
+
+class Food(Turtle):
+
+    def __init__(self):
+        super().__init__()
+        self.shape("circle")
+        self.penup()
+        self.shapesize(stretch_wid=0.5, stretch_len=0.5)
+        self.color("blue")
+        self.speed(0)
+        self.refresh()
+
+    def refresh(self):
+        random_x = random.randint(-13, 14) * 20
+        random_y = random.randint(-13, 14) * 20
+        self.goto(random_x, random_y)
+
+###############
+##scoreboard.py
+from turtle import Turtle
+ALIGNMENT = "center"
+FONT = ("Courier", 24, "normal")
+
+
+class Scoreboard(Turtle):
+
+    def __init__(self):
+        super().__init__()
+        self.score = 0
+        self.hideturtle()
+        self.color("white")
+        self.teleport(0, 260)
+        self.update_scoreboard()
+
+    def update_scoreboard(self):
+        self.write(f"Score: {self.score}", align=ALIGNMENT, font=FONT)
+
+    def game_over(self):
+        self.goto(0,0)
+        self.write(f"GAME OVER", align=ALIGNMENT, font=FONT)
+
+    def increase_score(self):
+        self.score += 1
+        self.clear()
+        self.update_scoreboard()
