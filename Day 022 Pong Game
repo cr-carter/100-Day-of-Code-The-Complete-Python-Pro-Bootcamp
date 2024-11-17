@@ -1,0 +1,138 @@
+#The purpose of this project was to gain further experience using the Turtle and Screen modules
+#to create a GUI, manipulating objects within that GUI, and focusing more on utilizing objects.
+
+
+########
+#main.py
+from turtle import Screen, Turtle
+from paddle import Paddle
+from ball import Ball
+from scoreboard import Scoreboard
+import time
+
+screen = Screen()
+screen.bgcolor("black")
+screen.setup(width=800, height=600)
+screen.title("Pong")
+screen.tracer(0)
+
+
+r_paddle = Paddle((350, 0))
+l_paddle = Paddle((-350, 0))
+ball = Ball()
+
+scoreboard = Scoreboard()
+
+screen.listen()
+screen.onkeypress(fun=r_paddle.go_up, key="Up")
+screen.onkeypress(fun=r_paddle.go_down, key="Down")
+screen.onkeypress(fun=l_paddle.go_up, key="w")
+screen.onkeypress(fun=l_paddle.go_down, key="s")
+
+game_is_on = True
+
+while game_is_on is True:
+    screen.update()
+    ball.move()
+    time.sleep(ball.move_speed)
+#    #Detect wall collision
+    if ball.ycor() >= 280 or ball.ycor() <= -280:
+        ball.bounce()
+#    #Detect paddle collision
+    if ball.distance(r_paddle) < 50 and ball.xcor() > 320 or ball.distance(l_paddle) < 50 and ball.xcor() < -320:
+        ball.rebound()
+#   #Detect right paddle miss
+    if ball.xcor() > 380:
+        ball.reset_position()
+        scoreboard.l_point()
+#   #Detect left paddle miss
+    if ball.xcor() < -380:
+        ball.reset_position()
+        scoreboard.r_point()
+
+screen.exitonclick()
+
+
+##########
+#paddle.py
+from turtle import Turtle
+
+
+class Paddle(Turtle):
+    def __init__(self, position):
+        super().__init__()
+        self.shape("square")
+        self.color("white")
+        self.shapesize(stretch_wid=5, stretch_len=1)
+        self.penup()
+        self.goto(position)
+
+    def go_up(self):
+        if self.ycor() < 250:
+            self.goto(self.xcor(), self.ycor() + 20)
+
+    def go_down(self):
+        if self.ycor() > -240:
+            self.goto(self.xcor(), self.ycor() - 20)
+
+
+########
+#ball.py
+from turtle import Turtle
+
+
+class Ball(Turtle):
+    def __init__(self):
+        super().__init__()
+        self.shape("square")
+        self.color("white")
+        self.penup()
+        self.x_change = 10
+        self.y_change = 10
+        self.move_speed = 0.1
+
+    def move(self):
+        self.goto(self.xcor() + self.x_change, self.ycor() + self.y_change)
+
+    def bounce(self):
+        self.y_change *= -1
+
+    def rebound(self):
+        self.x_change *= -1
+        self.move_speed *= 0.9
+
+    def reset_position(self):
+        self.goto(0,0)
+        self.rebound()
+        self.move_speed = 0.1
+
+
+##############
+#scoreboard.py
+from turtle import Turtle
+
+class Scoreboard(Turtle):
+    def __init__(self):
+        super().__init__()
+        self.color("white")
+        self.penup()
+        self.hideturtle()
+        self.l_score = 0
+        self.r_score = 0
+        self.update()
+
+    def update(self):
+        self.clear()
+        self.goto(-100, 200)
+        self.write(self.l_score, align="center", font=("Courier", 80, "normal"))
+        self.goto(100, 200)
+        self.write(self.r_score, align="center", font=("Courier", 80, "normal"))
+
+    def l_point(self):
+        self.l_score += 1
+        self.update()
+
+    def r_point(self):
+        self.r_score += 1
+        self.update()
+
