@@ -1,0 +1,151 @@
+#The purpose of this project is to gain more experience with the turtle graphics, with user input,
+#the use of classes, and the random and time modules. One thing I would have liked to improve on with 
+#this project (and I may come back to revisit it) is to create a seperate car class in order to have each 
+#car move at slightly different speeds. Additionally, I noticed that each car uses about 0.1MB of RAM,
+#but those cars do not seem to release to memory allocation after they are deleted. This is something I hope
+#to learn more about as I continue on with the Udemy course.
+
+########
+#main.py
+import random
+import time
+from turtle import Screen
+from player import Player
+from car_manager import CarManager
+from scoreboard import Scoreboard
+
+screen = Screen()
+screen.setup(width=600, height=600)
+screen.tracer(0)
+
+player = Player()
+car_manager = CarManager()
+scoreboard = Scoreboard()
+
+screen.listen()
+screen.onkeypress(fun=player.move_up, key="Up")
+screen.onkeypress(fun=player.move_down, key="Down")
+
+
+game_is_on = True
+
+while game_is_on:
+    time.sleep(0.1)
+    screen.update()
+
+    car_manager.move_cars()
+    if random.randint(1, 6) == 1:
+        for _ in range(scoreboard.level):
+            car_manager.create_car()
+
+    for car in car_manager.all_cars:
+        if player.distance(car) < 22 and -15 < (player.ycor() - car.ycor()) < 15:
+            game_is_on = False
+
+    if player.is_at_finish_line():
+        player.go_to_start()
+        car_manager.level_up()
+        scoreboard.increase_level()
+
+screen.exitonclick()
+
+
+
+##############
+#scoreboard.py
+from turtle import Turtle
+
+FONT = ("Courier", 24, "normal")
+
+
+class Scoreboard(Turtle):
+    def __init__(self):
+        super().__init__()
+        self.level = 1
+        self.hideturtle()
+        self.penup()
+        self.goto(-280, 260)
+        self.update_scoreboard()
+
+    def update_scoreboard(self):
+        self.clear()
+        self.write(f"Level: {self.level}", align="left", font=FONT)
+
+    def increase_level(self):
+        self.level += 1
+        self.update_scoreboard()
+
+    def game_over(self):
+        self.goto(0, 0)
+        self.write(f"GAME OVER", align="center", font=FONT)
+
+
+
+
+###############
+#car_manager.py
+from turtle import Turtle
+import random
+
+COLORS = ["red", "orange", "yellow", "green", "blue", "purple"]
+STARTING_MOVE_DISTANCE = 5
+MOVE_INCREMENT = 5
+
+
+class CarManager:
+
+    def __init__(self):
+        self.all_cars = []
+        self.car_speed = STARTING_MOVE_DISTANCE
+
+    def create_car(self):
+        new_car = Turtle("square")
+        new_car.shapesize(stretch_wid=1, stretch_len=2)
+        new_car.penup()
+        new_car.color(random.choice(COLORS))
+        random_y = random.randint(-250, 250)
+        new_car.teleport(320, random_y)
+        self.all_cars.append(new_car)
+
+    def move_cars(self):
+        for car in self.all_cars:
+            car.backward(self.car_speed)
+            if car.xcor() < -300:
+                self.all_cars.remove(car)
+                car.ht()
+                del car
+
+    def level_up(self):
+        self.car_speed += MOVE_INCREMENT
+
+
+
+##########
+#player.py
+from turtle import Turtle
+
+STARTING_POSITION = (0, -280)
+MOVE_DISTANCE = 10
+FINISH_LINE_Y = 280
+
+
+class Player(Turtle):
+    def __init__(self):
+        super().__init__()
+        self.penup()
+        self.speed(0)
+        self.go_to_start()
+        self.shape("turtle")
+        self.setheading(90)
+
+    def move_up(self):
+        self.forward(MOVE_DISTANCE)
+
+    def move_down(self):
+        self.backward(MOVE_DISTANCE)
+
+    def is_at_finish_line(self):
+        return self.ycor() > FINISH_LINE_Y
+
+    def go_to_start(self):
+        self.goto(STARTING_POSITION)
