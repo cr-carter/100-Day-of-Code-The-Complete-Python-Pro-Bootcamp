@@ -1,0 +1,189 @@
+'''
+The purpose of this project is to act as a capstone for the "Intermediate" section of the 100 Days of Code course on Udemy.
+This project focuses on the use of APIs for several different resources, and integrates them into seperate files/classes
+that are used by the main.py. This program is intended to be set as a script to run daily to check for flight deals for
+the user based on information then enter on a Google Sheet worksheet.
+'''
+
+########
+#main.py
+
+from flight_data import find_flight
+import flight_search
+import notification_manager
+import data_manager
+from datetime import datetime, timedelta
+
+data_manager = data_manager.DataManager()
+data = data_manager.get_dest_max_price()
+flight_search = flight_search.FlightSearch()
+notification_manager = notification_manager.NotificationManager()
+
+origin_airport = 'AUS'
+
+for row in data:
+    if row['iataCode'] == '':
+        row['iataCode'] = flight_search.get_iata_code(row['city'])
+
+data_manager.destination_data = data
+data_manager.update_destination_codes()
+
+start_date = datetime.today() + timedelta(days=1)
+end_date = datetime.today() + timedelta(days=180)
+
+for destination in data:
+    flights = flight_search.flight_checker(origin_airport, destination['iataCode'], from_date=start_date, to_date=end_date)
+    cheapest_flight = find_flight(flights)
+    print(cheapest_flight.price, cheapest_flight.destination_airport)
+    if cheapest_flight.price < destination['lowestPrice']:
+        print(f'Lowest price found to fly from {origin_airport} to {cheapest_flight.destination_airport}, '
+                         f'from {cheapest_flight.depart_date} to {cheapest_flight.return_date}. '
+                         f'Only {cheapest_flight.price}!')
+        notification_manager.send_text(
+            message_body=f'Lowest price found to fly from {origin_airport} to {cheapest_flight.destination_airport}, '
+                         f'from {cheapest_flight.depart_date} to {cheapest_flight.return_date}. '
+                         f'Only {cheapest_flight.price}!')
+
+
+#################
+#flight_search.py
+
+import os
+import requests
+from datetime import datetime
+
+IATA_ENDPOINT = "https://test.api.amadeus.com/v1/reference-data/locations/cities"
+FLIGHT_ENDPOINT = "https://test.api.amadeus.com/v2/shopping/flight-offers"
+
+class FlightSearch:
+    #This class is responsible for talking to the Flight Search API.
+    def __init__(self):
+        self._AMADEUS_API = os.environ.get('AMADEUS_API')
+        self._AMADEUS_SECRET = os.environ.get('AMADEUS_SECRET')
+        self._TOKEN = self._get_new_token()
+
+
+    def _get_new_token(self):
+        header = {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+        body = {
+            'grant_type': 'client_credentials',
+            'client_id': self._AMADEUS_API,
+            'client_secret': self._AMADEUS_SECRET
+        }
+        response = requests.post(url='https://test.api.amadeus.com/v1/security/oauth2/token', headers=header, data=body)
+        return response.json()['access_token']
+
+    def get_iata_code(self, city_name):
+        headers = {'Authorization': f'Bearer {self._TOKEN}'}
+        query = {
+            'keyword': city_name,
+            'max': '2',
+            'include': 'AIRPORTS'
+        }
+        response = requests.get(url=IATA_ENDPOINT, headers=headers, params=query)
+        try:
+            iata_code = response.json()['data'][0]['iataCode']
+            return iata_code
+        except IndexError:
+            return "N/A"
+        except KeyError:
+            return "Not Found"
+
+    def flight_checker(self, origin_code, destination_code, from_date, to_date):
+        headers = {'Authorization': f'Bearer {self._TOKEN}'}
+        query = {
+            'originLocationCode': origin_code,
+            'destinationLocationCode': destination_code,
+            'departureDate': from_date.strftime('%Y-%m-%d'),
+            'returnDate': to_date.strftime('%Y-%m-%d'),
+            'adults': 1,
+            'currencyCode': 'USD',
+            'max': '10'
+        }
+        response = requests.get(url=FLIGHT_ENDPOINT, headers=headers, params=query)
+        return response.json()
+
+
+###############
+#flight_data.py
+
+class FlightData:
+
+    def __init__(self, price, origin_airport, destination_airport, depart_date, return_date):
+        self.price = price
+        self.origin_airport = origin_airport
+        self.destination_airport = destination_airport
+        self.depart_date = depart_date
+        self.return_date = return_date
+
+def find_flight(data):
+    flight_comp = data['data'][0]
+    lowest_price = float(flight_comp['price']['grandTotal'])
+    origin = flight_comp['itineraries'][0]['segments'][0]['departure']['iataCode']
+    destination = flight_comp['itineraries'][0]['segments'][0]['arrival']['iataCode']
+    depart_date = flight_comp['itineraries'][0]['segments'][0]['departure']['at'].split('T')[0]
+    return_date = flight_comp['itineraries'][0]['segments'][0]['departure']['at'].split('T')[0]
+    cheapest_flight = FlightData(lowest_price, origin, destination, depart_date, return_date)
+
+    for flight in data['data']:
+        price = float(flight['price']['grandTotal'])
+        if price < lowest_price:
+            lowest_price = price
+            origin = flight['itineraries'][0]['segments'][0]['departure']['iataCode']
+            destination = flight['itineraries'][0]['segments'][0]['arrival']['iataCode']
+            depart_date = flight['itineraries'][0]['segments'][0]['departure']['at'].split('T')[0]
+            return_date = flight['itineraries'][0]['segments'][0]['departure']['at'].split('T')[0]
+            cheapest_flight = FlightData(lowest_price, origin, destination, depart_date, return_date)
+
+    return cheapest_flight
+
+
+################
+#data_manager.py
+
+import os
+import requests
+import pprint
+
+class DataManager:
+    #This class is responsible for talking to the Google Sheet.
+    def __init__(self):
+        self._SHEETY_API = os.environ.get('SHEETY_API')
+        self._SHEETY_TOKEN = os.environ.get('SHEETY_TOKEN')
+        self._SHEETY_AUTHORIZATION = ('Authorization', f'Basic {self._SHEETY_TOKEN}')
+        self.sheety_endpoint = f'https://api.sheety.co/{self._SHEETY_API}/flightDeals/prices'
+        self.destination_data = {}
+
+    def get_dest_max_price(self):
+        response = requests.get(url=self.sheety_endpoint)
+        data = response.json()
+        self.destination_data = data['prices']
+        return self.destination_data
+
+    def update_destination_codes(self):
+        for city in self.destination_data:
+            update_data = {
+                'price': {
+                    'iataCode': city['iataCode']
+                }
+            }
+            response = requests.put(url=f'{self.sheety_endpoint}/{city['id']}', json=update_data)
+
+
+########################
+#notification_manager.py
+
+import os
+from twilio.rest import Client
+
+class NotificationManager:
+    #This class is responsible for sending notifications with the deal flight details.
+    def __init__(self):
+        self.client = Client(os.environ.get('ACCOUNT_SID'), os.environ.get('AUTH_TOKEN'))
+
+    def send_text(self, message_body):
+        message = self.client.messages.create(from_=os.environ.get('TWILIO_NUM'), body=message_body, to=os.environ.get('ALERT_NUM'))
+        print(message.status)
+
