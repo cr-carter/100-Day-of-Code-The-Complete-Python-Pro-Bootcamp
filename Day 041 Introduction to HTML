@@ -1,0 +1,18 @@
+<!---
+The purpose of this project is to gain a basic understanding of HTML.
+The 100 Days of Code course introduces HTML in order to better prepare
+students to write Python code that will integrate with HTML.
+-->
+<h1>The Best Movies According to Chase</h1>
+<h2>My top 3 movies of all-time.</h2>
+
+<hr />
+
+<h3>The Shawshank Redemption</h3>
+<p>The Shawshank Redemption, a captivating drama directed by Frank Darabont, hinges on the resilience of the human spirit. The narrative unfolds in the grim confines of Shawshank State Penitentiary, where banker Andy Dufresne (Tim Robbins) lands after being wrongfully convicted for murder. Alongside Ellis 'Red' Redding (Morgan Freeman), a long-term inmate, Andy battles despair and corruption. In this struggle, they form an unshakeable bond that transcends the prison walls. A seven-time Oscar nominee, 'The Shawshank Redemption' is a testament to friendship's power and hope's endurance amid adversity.</p>
+
+<h3>Saving Private Ryan</h3>
+<p>Captain John Miller (Tom Hanks) takes his men behind enemy lines to find Private James Ryan, whose three brothers have been killed in combat. Surrounded by the brutal realties of war, while searching for Ryan, each man embarks upon a personal journey and discovers their own strength to triumph over an uncertain future with honor, decency and courage.</p>
+
+<h3>The Dark Knight</h3>
+<p>With the help of allies Lt. Jim Gordon (Gary Oldman) and DA Harvey Dent (Aaron Eckhart), Batman (Christian Bale) has been able to keep a tight lid on crime in Gotham City. But when a vile young criminal calling himself the Joker (Heath Ledger) suddenly throws the town into chaos, the caped Crusader begins to tread a fine line between heroism and vigilantism.</p>
