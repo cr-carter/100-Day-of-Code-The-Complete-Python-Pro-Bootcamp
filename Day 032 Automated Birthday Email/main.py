@@ -37,10 +37,3 @@ for person in birthday_list:
             connection.sendmail(from_addr=my_email,
                                 to_addrs=person["email"],
                                 msg=f'Subject:Happy Birthday\n\n{message}')
-
-
-##############
-#birthdays.csv
-name,email,year,month,day
-Test_User,email@yahoo.com,1961,12,4
-Another_User,email@gmail.com,1962,10,10
