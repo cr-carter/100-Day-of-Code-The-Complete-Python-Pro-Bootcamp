@@ -7,9 +7,6 @@ I also went a step further and researched how to perform actions when the user
 closes the window, using the '.protocol' methods.
 '''
 
-########
-#main.py
-
 from tkinter import *
 import random
 import pandas
@@ -132,8 +129,3 @@ next_card()
 
 window.protocol("WM_DELETE_WINDOW", on_closing)
 window.mainloop()
-
-
-##########################################
-# The image files and the french_words.csv
-# can be provided if requested.
