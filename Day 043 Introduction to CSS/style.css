@@ -1,0 +1,34 @@
+/*
+The purpose of this project was to learn the basics of CSS, including
+understanding inline, internal, and external methods. I also was expsed
+to the various selectors used in CSS, such as the tag, element, id, and
+class selectors.
+*/
+
+.color-title {
+    font-weight: normal;
+}
+
+#red {
+    color: red
+}
+
+#blue {
+    color: blue
+}
+
+#orange {
+    color: orange
+}
+
+#green {
+    color: green
+}
+
+#yellow {
+    color: yellow
+}
+
+img {
+    height: 200px; width: 200px;
+}
