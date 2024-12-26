@@ -3,7 +3,6 @@
 # classes, lists, etc. from other sources. Lastly, I gained practice importing and converting
 # jsons to dictionary items.
 
-#main.py
 from question_model import Question
 from data import question_data
 from quiz_brain import QuizBrain
@@ -26,6 +25,4 @@ while quiz.still_has_question():
 
 print("You've completed the quiz.")
 print(f"Your final score is: {quiz.score}/{quiz.question_number}")
-
-
 
